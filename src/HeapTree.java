@@ -3,24 +3,26 @@ public class HeapTree {
     private static Heap heap = new Heap(256);
 
     public static void main(String[] args) {
+        heap.insert(5);
+        heap.insert(1);
+        heap.insert(2);
+        heap.insert(4);
+        heap.insert(3);
+        heap.insert(6);
         heap.insert(10);
         heap.insert(9);
         heap.insert(8);
         heap.insert(7);
-        heap.insert(6);
-        heap.insert(5);
-        heap.insert(4);
-        heap.insert(3);
-        heap.insert(2);
-        heap.insert(1);
-        heap.print();
+        // descend와 priorityPrint는 따로 실행해야 한다.
+        heap.descend();
+//        heap.priorityPrint();
     }
 }
 
 class Heap {
     private int[] heapArray;
     private int tail = 0;
-    private static int capacity;
+    private int capacity;
 
     public Heap(int capacity) {
         this.heapArray = new int[capacity];
@@ -102,7 +104,40 @@ class Heap {
         upRecursive(getParentIndex(key), key);
     }
 
-    public void print() {
+    public void descend() {
+        System.out.print("내림차순 정렬: ");
+        for (int i = tail - 1; i >= 0; i--) {
+            int temp = heapArray[0];
+            heapArray[0] = heapArray[i];
+            heapArray[i] = temp;
+
+            descendRecursive(0, i);
+        }
+        // 출력
+        for (int i = 0; i < tail; i++) {
+            System.out.printf("%d ", heapArray[i]);
+        }
+        System.out.println();
+    }
+
+    private void descendRecursive(int parent, int limit) {
+        int child = parent;
+        int leftIndex = getLeftChildIndex(parent);
+        if (leftIndex < limit && heapArray[parent] > heapArray[leftIndex]) {
+            child = leftIndex;
+        }
+        int rightIndex = getRightChildIndex(parent);
+        if (rightIndex < limit && heapArray[child] > heapArray[rightIndex]) {
+            child = rightIndex;
+        }
+        if (child != parent) {
+            swap(parent, child);
+            descendRecursive(child, limit);
+        }
+    }
+
+    public void priorityPrint() {
+        System.out.print("오름차순 우선순위 큐: ");
         int N = tail;
         for (int i = 0; i < N; i++) {
             System.out.printf("%d ", extractMin());

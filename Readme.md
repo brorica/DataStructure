@@ -10,3 +10,6 @@
 
   https://brorica.tistory.com/234
 
+- 이진 힙(binary heap)
+
+  https://brorica.tistory.com/235
