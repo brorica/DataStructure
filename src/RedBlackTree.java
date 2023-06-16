@@ -1,6 +1,10 @@
+import java.util.LinkedList;
+import java.util.Queue;
+
 public class RedBlackTree {
 
     private static class Node {
+
         int data;
         char color;
         Node parent, left, right;
@@ -17,92 +21,187 @@ public class RedBlackTree {
             if (color == 'R') {
                 color = 'B';
             }
-            if (color == 'B') {
+            else if (color == 'B') {
                 color = 'R';
             }
         }
     }
+    // 색을 반전시키기 전에 회전 수행 여부를 저장함
+    private static class RotateStatus {
+        boolean LL;
+        boolean LR;
+        boolean RR;
+        boolean RL;
+    }
+
+    private static RotateStatus status = new RotateStatus();
 
     public static void main(String[] args) {
         Node node = null;
-        node = insert(node, 1);
+        node = insert(node, 10);
+        node = insert(node, 5);
+        node = insert(node, 15);
+        node = insert(node, 20);
+        node = insert(node, 25);
+        node = insert(node, 23);
+        node = insert(node, 24);
+        print(node);
     }
 
     private static Node insert(Node root, int data) {
         if (root == null) {
             Node newNode = new Node(data);
             newNode.changeColor();
+            newNode.parent = newNode;
             return newNode;
         }
         return insertLeaf(root, data);
     }
 
-    /**
-     * todo: 회전에 대한 부분 메소드로 빼기
-     * todo: 재귀적으로 색을 조정하되, 루트 노드의 색은 검은색으로 보장하기
-     */
     private static Node insertLeaf(Node root, int data) {
         if (root == null) {
             return new Node(data);
         }
-        Node parent = root.parent;
         if (root.data > data) {
-            root.left = insert(root.left, data);
+            root.left = insertLeaf(root.left, data);
             root.left.parent = root;
-            // 부모 노드가 검은색이면 ㅇㅋ
-            if (root.color == 'B') {
-                // nothing
-            }
-            // 혼란하다 혼란해
-            if (root.color == 'R') {
-                // 부모가 좌측 노드면, 형제 노드는 우측 노드
-                Node brother = getBrotherNode(root);
-                if (brother == null || brother.color == 'B') {
-                    // 부모 노드를 중심으로 right-rotation (LL)
-                    // 부모 노드의 색을 블랙으로, 조부모 노드의 색을 레드로.
-                }
-                else if (brother.color == 'R') {
-                    // 부모와 삼촌을 블랙 노드로 변경
-                    // 조부모 노드를 레드로 변경
-                }
+            if (checkParentAndBrotherRedNode(root)) {
             }
         }
         if (root.data < data) {
-            root.right = insert(root.right, data);
+            root.right = insertLeaf(root.right, data);
             root.right.parent = root;
-            // 부모 노드가 검은색이면 ㅇㅋ
-            if (root.color == 'B') {
-                // nothing
+            if (checkParentAndBrotherRedNode(root)) {
             }
-            // 혼란하다 혼란해
-            if (root.color == 'R') {
-                Node brother = getBrotherNode(root);
-                // 부모가 좌측 노드면, 형제 노드는 우측 노드
-                if (brother == null || brother.color == 'B') {
-                    // 부모 노드를 중심으로 left rotation (LR)
-                    // 부모 노드의 색을 블랙으로, 조부모 노드의 색을 레드로.
+        }
+        root = activeStatus(root);
+        setRotation(root);
+        return root;
+    }
+
+    private static Node activeStatus(Node root) {
+        if (status.LL) {
+            status.LL = false;
+            root = rightRotate(root);
+            root.color = 'B';
+            root.right.color= 'R';
+        }
+        if (status.LR) {
+            status.LR = false;
+            root.left = leftRotate(root.left);
+            root = rightRotate(root);
+            root.color = 'B';
+            root.right.color= 'R';
+        }
+        if (status.RR) {
+            status.RR = false;
+            root = leftRotate(root);
+            root.color = 'B';
+            root.left.color= 'R';
+        }
+        if (status.RL) {
+            status.RL = false;
+            root.right = rightRotate(root.right);
+            root = leftRotate(root);
+            root.color = 'B';
+            root.left.color= 'R';
+        }
+        return root;
+    }
+
+    private static void setRotation(Node root) {
+        if (root.parent == null) {
+            return;
+        }
+        Node brotherNode = getBrotherNode(root);
+        // 부모가 레드 노드이면서 삼촌 노드가 null 또는 블랙 노드라면 회전 수행
+        if (root.color == 'R' && (brotherNode == null || brotherNode.color == 'B')) {
+            if (root.parent.left == root) {
+                if (root.left != null && root.left.color == 'R') {
+                    status.LL = true;
                 }
-                else if (brother.color == 'R') {
-                    // 부모와 삼촌을 블랙 노드로 변경
-                    // 조부모 노드를 레드로 변경
+                if (root.right != null && root.right.color == 'R') {
+                    status.LR = true;
+                }
+            }
+            if (root.parent.right == root) {
+                if (root.left != null && root.left.color == 'R') {
+                    status.RL = true;
+                }
+                if (root.right != null && root.right.color == 'R') {
+                    status.RR = true;
                 }
             }
         }
-        return null;
     }
 
     private static Node getBrotherNode(Node node) {
-        Node parent = node.parent;
-        if (parent == null) {
+        if (node.parent == null) {
             return null;
         }
-        if (parent.left == node) {
-            return parent.right;
+        if (node.parent.left == node) {
+            return node.parent.right;
         }
-        if (parent.right == node) {
-            return parent.left;
+        if (node.parent.right == node) {
+            return node.parent.left;
         }
         return null;
     }
+    /**
+     * 자신과 형제 노드가 레드일 때 발생. 자신와 형제 노드를 블랙으로 변경
+     * 부모 노드는 레드로 변경. 단, 부모가 루트 노드인 경우 블랙으로 다시 바꿔야 함.
+     */
+    private static boolean checkParentAndBrotherRedNode(Node node) {
+        Node parent = node.parent;
+        if (parent == node) {
+            return false;
+        }
+        if (parent.left == null || parent.right == null) {
+            return false;
+        }
+        if (parent.left.color == 'R' && parent.right.color == 'R') {
+            parent.left.color = 'B';
+            parent.right.color = 'B';
+            if (parent.parent != parent) {
+                parent.color = 'R';
+            }
+            return true;
+        }
+        return false;
+    }
 
+    private static Node rightRotate(Node node) {
+        Node leftChild = node.left;
+        node.left = leftChild.right;
+        leftChild.right = node;
+        node.parent = leftChild;
+        return leftChild;
+    }
+
+    private static Node leftRotate(Node node) {
+        Node rightChild = node.right;
+        node.right = rightChild.left;
+        rightChild.left = node;
+        node.parent = rightChild;
+        return rightChild;
+    }
+
+    private static void print(Node root) {
+        Queue<Node> q = new LinkedList<>();
+        q.add(root);
+        while (!q.isEmpty()) {
+            int len = q.size();
+            for (int i = 0; i < len; i++) {
+                Node here = q.poll();
+                System.out.printf("%d(%c)\t", here.data, here.color);
+                if (here.left != null) {
+                    q.add(here.left);
+                }
+                if (here.right != null) {
+                    q.add(here.right);
+                }
+            }
+            System.out.println();
+        }
+    }
 }
