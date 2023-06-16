@@ -65,14 +65,12 @@ public class RedBlackTree {
         if (root.data > data) {
             root.left = insertLeaf(root.left, data);
             root.left.parent = root;
-            if (checkParentAndBrotherRedNode(root)) {
-            }
+            checkParentAndBrotherRedNode(root);
         }
         if (root.data < data) {
             root.right = insertLeaf(root.right, data);
             root.right.parent = root;
-            if (checkParentAndBrotherRedNode(root)) {
-            }
+            checkParentAndBrotherRedNode(root);
         }
         root = activeStatus(root);
         setRotation(root);
@@ -151,13 +149,13 @@ public class RedBlackTree {
      * 자신과 형제 노드가 레드일 때 발생. 자신와 형제 노드를 블랙으로 변경
      * 부모 노드는 레드로 변경. 단, 부모가 루트 노드인 경우 블랙으로 다시 바꿔야 함.
      */
-    private static boolean checkParentAndBrotherRedNode(Node node) {
+    private static void checkParentAndBrotherRedNode(Node node) {
         Node parent = node.parent;
         if (parent == node) {
-            return false;
+            return;
         }
         if (parent.left == null || parent.right == null) {
-            return false;
+            return;
         }
         if (parent.left.color == 'R' && parent.right.color == 'R') {
             parent.left.color = 'B';
@@ -165,9 +163,7 @@ public class RedBlackTree {
             if (parent.parent != parent) {
                 parent.color = 'R';
             }
-            return true;
         }
-        return false;
     }
 
     private static Node rightRotate(Node node) {
