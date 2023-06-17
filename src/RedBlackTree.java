@@ -5,13 +5,21 @@ public class RedBlackTree {
 
     private static class Node {
 
-        int data;
+        Integer data;
         char color;
         Node parent, left, right;
 
-        public Node(int data) {
+        public Node(Integer data) {
             this.data = data;
             this.color = 'R';
+            this.parent = null;
+            this.left = null;
+            this.right = null;
+        }
+
+        public Node(Integer data, char color) {
+            this.data = data;
+            this.color = color;
             this.parent = null;
             this.left = null;
             this.right = null;
@@ -38,13 +46,23 @@ public class RedBlackTree {
 
     public static void main(String[] args) {
         Node node = null;
+        node = insert(node, 7);
+        node = insert(node, 3);
+        node = insert(node, 18);
         node = insert(node, 10);
-        node = insert(node, 5);
-        node = insert(node, 15);
-        node = insert(node, 20);
-        node = insert(node, 25);
-        node = insert(node, 23);
-        node = insert(node, 24);
+        node = insert(node, 22);
+        node = insert(node, 8);
+        node = insert(node, 11);
+        node = insert(node, 26);
+        node = insert(node, 2);
+        node = insert(node, 6);
+        print(node);
+        System.out.println();
+        node = delete(node, 18);
+        node = delete(node, 11);
+//        node = delete(node, 3);
+//        node = delete(node, 10);
+//        node = delete(node, 22);
         print(node);
     }
 
@@ -135,7 +153,7 @@ public class RedBlackTree {
 
     private static Node getBrotherNode(Node node) {
         if (node.parent == null) {
-            return null;
+            return node;
         }
         if (node.parent.left == node) {
             return node.parent.right;
@@ -143,7 +161,7 @@ public class RedBlackTree {
         if (node.parent.right == node) {
             return node.parent.left;
         }
-        return null;
+        return node;
     }
     /**
      * 자신과 형제 노드가 레드일 때 발생. 자신와 형제 노드를 블랙으로 변경
@@ -180,6 +198,181 @@ public class RedBlackTree {
         rightChild.left = node;
         node.parent = rightChild;
         return rightChild;
+    }
+
+    private static Node delete(Node node, int data) {
+        if (node == null) {
+            return node;
+        }
+        if (node.data > data) {
+            node.left = delete(node.left, data);
+        }
+        if (node.data < data) {
+            node.right = delete(node.right, data);
+        }
+        if (node.data == data) {
+            if (node.color == 'R') {
+                // 자식 노드 없음
+                if (node.left == null && node.right == null) {
+                    node.parent = null;
+                    return null;
+                }
+                // 자식이 둘
+                if (node.left != null && node.right != null) {
+                    Node successorNode = findSuccessor(node.left);
+                    // 후임 노드의 부모 노드 포인터 정리
+                    if (successorNode.parent.left == successorNode) {
+                        successorNode.parent.left = successorNode.left;
+                    }
+                    if (successorNode.parent.right == successorNode) {
+                        successorNode.parent.right = null;
+                    }
+                    successorNode.parent = null;
+                    node.data = successorNode.data;
+                    // 삭제할 노드와 후임 노드 둘 다 레드 노드면 레드 노드
+                    if (successorNode.color == 'R') {
+                        node.color = 'R';
+                    }
+                    // 삭제할 노드가 레드고 후임 노드가 블랙이면 블랙 노드
+                    if (successorNode.color == 'B') {
+                        node.color = 'B';
+                    }
+                    return node;
+                }
+                // 자식이 하나
+                if (node.left != null) {
+                    node.left.parent = node.parent;
+                    node = node.left;
+                }
+                else if (node.right != null) {
+                    node.right.parent = node.parent;
+                    node = node.right;
+                }
+                return node;
+            }
+            if (node.color == 'B') {
+                Node successorNode = findSuccessor(node.left);
+                // 후임 노드가 레드라면 값만 변경하고 종료
+                if (successorNode.color == 'R') {
+                    node.data = successorNode.data;
+                    // 전임 노드의 부모 노드 포인터 정리
+                    if (successorNode.parent.left == successorNode) {
+                        successorNode.parent.left = null;
+                    }
+                    if (successorNode.parent.right == successorNode) {
+                        successorNode.parent.right = null;
+                    }
+                    return node;
+                }
+                // 후임 노드가 블랙 노드라면 값을 교체하고, 삭제할 노드를 이중 블랙 노드로 변경
+                if (successorNode.color == 'B') {
+                    node.data = successorNode.data;
+                    // 루트 노드를 삭제하는 거면 이중 블랙 노드로 하지 않음
+                    if (node.parent == node) {
+                        node.color = 'B';
+                    }
+                    else {
+                        node.color = 'D';
+                    }
+                    if (successorNode.parent.left == successorNode) {
+                        successorNode.parent.left = null;
+                    }
+                    if (successorNode.parent.right == successorNode) {
+                        successorNode.parent.right = null;
+                    }
+                }
+                // 삭제할 루트가 아니면서 이중 블랙 노드라면 형제 노드를 봐야 함
+                Node siblingNode = getBrotherNode(node);
+                Node siblingChildNode = getSiblingChildNode(siblingNode);
+                // 형제 노드가 블랙 노드면서 형제 노드의 자식 중 하나가 레드 노드라면
+                if (siblingNode.color == 'B' && siblingChildNode.color == 'R') {
+                    Node parent = siblingChildNode.parent;
+                    if(parent.left == siblingNode && siblingNode.left == siblingChildNode) {
+                        // LL
+                        siblingNode.left.color = parent.color;
+                        parent = rightRotate(siblingNode.parent);
+                        if (parent.right.data == null) {
+                            parent.right = null;
+                        }
+                    }
+                    if(parent.left == siblingNode && siblingNode.right == siblingChildNode) {
+                        // LR
+                        siblingNode.left.color = parent.color;
+                        parent.left = leftRotate(siblingNode);
+                        parent = rightRotate(parent);
+                        if (parent.right.data == null) {
+                            parent.right = null;
+                        }
+                    }
+                    if(parent.right == siblingNode && siblingNode.right == siblingChildNode) {
+                        // RR
+                        siblingNode.right.color = parent.color;
+                        parent = leftRotate((siblingNode.parent));
+                        if (parent.left.data == null) {
+                            parent.left = null;
+                        }
+                    }
+                    if(parent.right == siblingNode && siblingNode.left == siblingChildNode) {
+                        // RL
+                        siblingNode.left.color = parent.color;
+                        parent.right = rightRotate(siblingNode);
+                        parent = leftRotate(parent);
+                        if (parent.left.data == null) {
+                            parent.left = null;
+                        }
+                    }
+                    return parent;
+                }
+                if (siblingNode.color == 'R') {
+                    Node parent = siblingChildNode.parent;
+                    if (parent.left == siblingNode) {
+                        parent = rightRotate(parent);
+                        parent.color = 'B';
+                        parent.left.color = 'R';
+                        if (parent.right.color == 'D') {
+                            parent.right = null;
+                        }
+                    }
+                    else if (parent.right == siblingChildNode) {
+                        parent = leftRotate(parent);
+                        parent.color = 'B';
+                        parent.right.color = 'R';
+                        if (parent.left.color == 'D') {
+                            parent.left = null;
+                        }
+                    }
+                    return parent;
+                }
+            }
+        }
+        return node;
+    }
+
+    private static Node findSuccessor(Node node) {
+        if (node == null) {
+            Node nullNode = new Node(null, 'D');
+            return nullNode;
+        }
+        if (node.right == null) {
+            return node;
+        }
+        return findSuccessor(node.right);
+    }
+    /**
+     * 형제 노드의 자식 노드를 가져옴
+     * 자식 노드가 없는 경우 null leaf(블랙 노드) 반환
+     * 레드 노드인 자식이 있다면 해당 노드 반환.
+     * 만약, 두 자식이 레드 노드라면 우측 노드 우선 반환
+     */
+    private static Node getSiblingChildNode(Node siblingNode) {
+        Node node = new Node(null, 'B');
+        if (siblingNode.left != null && siblingNode.left.color == 'R') {
+            node = siblingNode.left;
+        }
+        if (siblingNode.right != null && siblingNode.right.color == 'R') {
+            node = siblingNode.right;
+        }
+        return node;
     }
 
     private static void print(Node root) {
