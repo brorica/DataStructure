@@ -40,13 +40,14 @@ public class RedBlackTree {
         insert(26);
         insert(2);
         insert(6);
+        insert(13);
         print();
         System.out.println();
-//        delete(18);
-//        delete(11);
-//        delete(3);
-//        delete(10);
-//        node = delete(node, 22);
+        delete(18);
+        delete(11);
+        delete(3);
+        delete(10);
+        delete(22);
         print();
     }
 
@@ -60,7 +61,7 @@ public class RedBlackTree {
         newNode.right = nilNode;
         // 새로운 노드를 삽입할 위치를 찾음
         Node x = root;
-        Node y = nilNode;
+        Node y = null;
         while (x != nilNode) {
             y = x;
             if (x.data <= data) {
@@ -71,7 +72,7 @@ public class RedBlackTree {
         }
         // 새로운 노드가 삽입될 부모 노드를 찾음
         newNode.parent = y;
-        if (y == nilNode) {
+        if (y == null) {
             root = newNode;
             root.color = 'B';
             return;
@@ -90,39 +91,37 @@ public class RedBlackTree {
     private static void insertBalance(Node node) {
         Node siblingNode;
         while (node.parent.color == 'R') {
-            Node parent = node.parent;          // 부모 노드
-            Node grandParent = parent.parent;   // 조부모 노드
-            if (parent == grandParent.right) {
-                siblingNode = grandParent.left;
+            if (node.parent == node.parent.parent.right) {
+                siblingNode = node.parent.parent.left;
                 if (siblingNode.color == 'R') {
                     siblingNode.color = 'B';
-                    parent.color = 'B';
-                    grandParent.color = 'R';
-                    node = grandParent;
+                    node.parent.color = 'B';
+                    node.parent.parent.color = 'R';
+                    node = node.parent.parent;
                 } else {
-                    if (node == parent.left) {
+                    if (node == node.parent.left) {
                         node = node.parent;
                         rightRotate(node);
                     }
-                    parent.color = 'B';
-                    grandParent.color = 'R';
-                    leftRotate(grandParent);
+                    node.parent.color = 'B';
+                    node.parent.parent.color = 'R';
+                    leftRotate(node.parent.parent);
                 }
             } else {
-                siblingNode = grandParent.right;
+                siblingNode = node.parent.parent.right;
                 if (siblingNode.color == 'R') {
                     siblingNode.color = 'B';
-                    parent.color = 'B';
-                    grandParent.color = 'R';
-                    node = grandParent;
+                    node.parent.color = 'B';
+                    node.parent.parent.color = 'R';
+                    node = node.parent.parent;
                 } else {
-                    if (node == parent.right) {
-                        node = parent;
+                    if (node == node.parent.right) {
+                        node = node.parent;
                         leftRotate(node);
                     }
-                    parent.color = 'B';
-                    grandParent.color = 'R';
-                    rightRotate(grandParent);
+                    node.parent.color = 'B';
+                    node.parent.parent.color = 'R';
+                    rightRotate(node.parent.parent);
                 }
             }
             if (node == root) {
@@ -139,7 +138,7 @@ public class RedBlackTree {
             leftChild.right.parent = node;
         }
         leftChild.parent = node.parent;
-        if (node.parent == nilNode) {
+        if (node.parent == null) {
             root = leftChild;
         } else if (node == node.parent.right) {
             node.parent.right = leftChild;
@@ -157,7 +156,7 @@ public class RedBlackTree {
             rightChild.left.parent = node;
         }
         rightChild.parent = node.parent;
-        if (node.parent == nilNode) {
+        if (node.parent == null) {
             root = rightChild;
         } else if (node == node.parent.left) {
             node.parent.left = rightChild;
@@ -244,12 +243,12 @@ public class RedBlackTree {
         }
         // 삭제된 노드가 블랙 노드면 red black 트리에 불균형 발생
         if (delNodeColor == 'B') {
-            // 복구작업
+            deleteBalance(swapNode);
         }
     }
 
     private static void transPlant(Node node, Node child) {
-        if (node.parent == nilNode) {
+        if (node.parent == null) {
             root = child;
         } else if (node.parent.left == node) {
             node.parent.left = child;
@@ -264,5 +263,60 @@ public class RedBlackTree {
             return node;
         }
         return findSuccessor(node.left);
+    }
+
+    private static void deleteBalance(Node node) {
+        Node sibling;
+        while (node != root && node.color == 'B') {
+            if (node == node.parent.left) {
+                sibling = node.parent.right;
+                if (sibling.color == 'R') {
+                    sibling.color = 'B';
+                    node.parent.color = 'R';
+                    leftRotate(node.parent);
+                    sibling = node.parent.right;
+                }
+                if (sibling.left.color == 'B' && sibling.right.color == 'B') {
+                    sibling.color = 'R';
+                    node = node.parent;
+                } else {
+                    if (sibling.right.color == 'B') {
+                        sibling.left.color = 'B';
+                        sibling.color = 'R';
+                        rightRotate(sibling);
+                        sibling = node.parent.right;
+                    }
+                    sibling.color = node.parent.color;
+                    node.parent.color = 'B';
+                    sibling.right.color = 'B';
+                    leftRotate(node.parent);
+                    node = root;
+                }
+            } else {
+                sibling = node.parent.left;
+                if (sibling.color == 'R') {
+                    sibling.color = 'B';
+                    node.parent.color = 'R';
+                    rightRotate(node.parent);
+                    sibling = node.parent.left;
+                }
+                if (sibling.left.color == 'B' && sibling.right.color == 'B') {
+                    sibling.color = 'R';
+                    node = node.parent;
+                } else {
+                    if (sibling.left.color == 'B') {
+                        sibling.right.color = 'B';
+                        sibling.color = 'R';
+                        leftRotate(sibling);
+                        sibling = node.parent.left;
+                    }
+                    sibling.color = node.parent.color;
+                    node.parent.color = 'B';
+                    sibling.left.color = 'B';
+                    rightRotate(node.parent);
+                    node = root;
+                }
+            }
+        }
     }
 }
