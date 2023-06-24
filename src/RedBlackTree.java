@@ -1,6 +1,3 @@
-import java.util.LinkedList;
-import java.util.Queue;
-
 public class RedBlackTree {
 
     private static class Node {
@@ -41,14 +38,13 @@ public class RedBlackTree {
         insert(2);
         insert(6);
         insert(13);
-        print();
-        System.out.println();
+        print(root, "", true);
         delete(18);
         delete(11);
         delete(3);
         delete(10);
         delete(22);
-        print();
+        print(root, "", true);
     }
 
     private static void insert(int data) {
@@ -63,8 +59,11 @@ public class RedBlackTree {
         Node x = root;
         Node y = null;
         while (x != nilNode) {
+            if (x.data == data) {
+                break;
+            }
             y = x;
-            if (x.data <= data) {
+            if (x.data < data) {
                 x = x.right;
             } else {
                 x = x.left;
@@ -167,31 +166,13 @@ public class RedBlackTree {
         node.parent = rightChild;
     }
 
-    private static void print() {
-        Queue<Node> q = new LinkedList<>();
-        q.add(root);
-        while (!q.isEmpty()) {
-            int len = q.size();
-            for (int i = 0; i < len; i++) {
-                Node here = q.poll();
-                System.out.printf("%d(%c)\t", here.data, here.color);
-                if (here.left != nilNode) {
-                    q.add(here.left);
-                }
-                if (here.right != nilNode) {
-                    q.add(here.right);
-                }
-            }
-            System.out.println();
-        }
-    }
-
     private static void delete(Integer data) {
         Node delNode = nilNode;
         Node x = root;
         while (x != nilNode) {
             if (x.data == data) {
                 delNode = x;
+                break;
             }
             if (x.data <= data) {
                 x = x.right;
@@ -317,6 +298,23 @@ public class RedBlackTree {
                     node = root;
                 }
             }
+        }
+        node.color = 'B';
+    }
+
+    private static void print(Node root, String indent, boolean last) {
+        if (root != nilNode) {
+            System.out.print(indent);
+            if (last) {
+                System.out.print("R----");
+                indent += "   ";
+            } else {
+                System.out.print("L----");
+                indent += "|  ";
+            }
+            System.out.println(root.data + "(" + root.color + ")");
+            print(root.left, indent, false);
+            print(root.right, indent, true);
         }
     }
 }

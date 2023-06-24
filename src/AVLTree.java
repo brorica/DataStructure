@@ -184,10 +184,9 @@ public class AVLTree {
         root = insert(root, 3);
         root = insert(root, 5);
         root = insert(root, 2);
-        preOrder(root);
+        print(root, "", true);
         root = insert(root, 1);
-        System.out.println();
-        preOrder(root);
+        print(root, "", true);
     }
 
     private static void testLeftRightRotation() {
@@ -198,10 +197,10 @@ public class AVLTree {
         root = insert(root, 6);
         root = insert(root, 1);
         root = insert(root, 3);
-        preOrder(root);
+        print(root, "", true);
         root = insert(root, 4);
         System.out.println();
-        preOrder(root);
+        print(root, "", true);
     }
 
     private static void testRightRightRotation() {
@@ -212,10 +211,10 @@ public class AVLTree {
         root = insert(root, 5);
         root = insert(root, 4);
         root = insert(root, 6);
-        preOrder(root);
+        print(root, "", true);
         root = insert(root, 7);
         System.out.println();
-        preOrder(root);
+        print(root, "", true);
     }
 
     private static void testRightLeftRotation() {
@@ -226,9 +225,25 @@ public class AVLTree {
         root = insert(root, 5);
         root = insert(root, 4);
         root = insert(root, 6);
-        preOrder(root);
+        print(root, "", true);
         root = insert(root, 3);
         System.out.println();
-        preOrder(root);
+        print(root, "", true);
+    }
+
+    private static void print(Node root, String indent, boolean last) {
+        if (root != null) {
+            System.out.print(indent);
+            if (last) {
+                System.out.print("R----");
+                indent += "   ";
+            } else {
+                System.out.print("L----");
+                indent += "|  ";
+            }
+            System.out.println(root.key);
+            print(root.left, indent, false);
+            print(root.right, indent, true);
+        }
     }
 }
