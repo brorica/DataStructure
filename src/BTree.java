@@ -3,12 +3,12 @@ public class BTree {
     static class Node {
         Node[] child;
         int n; // key 배열이 가지고 있는 원소 개수
-        Integer[] key;
+        int[] key;
         boolean leaf;
 
         public Node() {
             child = new Node[MAX_DEGREE + 1];
-            key = new Integer[MAX_DEGREE];
+            key = new int[MAX_DEGREE];
             n = 0;
             leaf = true;
         }
@@ -42,15 +42,15 @@ public class BTree {
         print(root);
     }
 
-    private static void insert(Integer value) {
+    private static void insert(int key) {
         Node node = root;
-        addKey(node, value);
+        addKey(node, key);
         if (node.n == MAX_DEGREE) {
             Node newRoot = new Node();
             newRoot.leaf = false;
             newRoot.child[0] = root;
             root = newRoot;
-            split(newRoot, 0, value);
+            split(newRoot, 0, key);
         }
     }
 
@@ -58,12 +58,12 @@ public class BTree {
     // 노드를 추가한 후 split
     // split 수행 후 노드 추가
     // 여기선 노드를 추가한 후 split 수행
-    private static void split(Node node, int index, Integer value) {
+    private static void split(Node node, int index, int key) {
         Node rightNode = new Node();
         Node leftNode = node.child[index];
-        if (node.key[index] != null) {
+        if (node.key[index] != 0) {
             int temp = node.n;
-            for (int i = node.n - 1; i >= 0 && node.key[i] > value; i--) {
+            for (int i = node.n - 1; i >= 0 && node.key[i] > key; i--) {
                 node.key[i + 1] = node.key[i];
                 node.child[i + 2] = node.child[i + 1];
                 temp -= 1;
@@ -77,7 +77,7 @@ public class BTree {
         // key 배열 정리
         for (int i = 0; i < DEGREE; i++) {
             rightNode.key[i] = leftNode.key[i + DEGREE];
-            leftNode.key[i + DEGREE] = null;
+            leftNode.key[i + DEGREE] = 0;
             leftNode.n -= 1;
         }
         // child 배열 정리, leaf 노드면 수행하는 의미가 없다.
@@ -90,35 +90,100 @@ public class BTree {
         // leftNode의 마지막 키를 위로 올림
         node.key[index] = leftNode.key[DEGREE - 1];
         node.n += 1;
-        leftNode.key[DEGREE - 1] = null;
+        leftNode.key[DEGREE - 1] = 0;
         leftNode.n -= 1;
         // 노드의 자식 노드 마지막에 rightNode 추가
         node.child[index + 1] = rightNode;
 
     }
 
-    private static void addKey(Node node, Integer value) {
+    private static void addKey(Node node, int key) {
         int index;
         if (node.leaf) {
             index = node.n;
-            for (int i = node.n - 1; i >= 0 && node.key[i] > value; i--) {
+            // 키의 순서를 오름차순으로 유지
+            for (int i = node.n - 1; i >= 0 && node.key[i] > key; i--) {
                 node.key[i + 1] = node.key[i];
                 index -= 1;
             }
-            node.key[index] = value;
+            node.key[index] = key;
             node.n += 1;
         }
         else {
             index = 0;
-            while (node.n > index && node.key[index] < value) {
+            while (node.n > index && node.key[index] < key) {
                 index += 1;
             }
             Node there = node.child[index];
-            addKey(there, value);
+            addKey(there, key);
             if (there.n == MAX_DEGREE) {
-                split(node, index, value);
+                split(node, index, key);
             }
         }
+    }
+
+    private static void delete(Node node, int key) {
+        Node delNode = find(root, key);
+        if (delNode == null) {
+            return;
+        }
+        int index;
+        for (index = 0; index < delNode.n; index++) {
+            if (delNode.key[index] == key) {
+                break;
+            }
+        }
+        // 삭제할 노드가 현 노드 안에 있는 경우
+        if (index < node.n && node.key[index] == key) {
+            if (node.leaf) {
+                for (index = 0; index < node.n && node.key[index] != key; index++) {
+                    continue;
+                }
+                for (int i = index; i < node.n; i++) {
+                    if (i < MAX_DEGREE - 1) {
+                        node.key[i] = node.key[i + 1];
+                    }
+                }
+                node.n -= 1;
+                return;
+            }
+            else {
+                Node leftChildNode = node.child[index];
+                if (leftChildNode.n >= DEGREE) {
+
+                }
+            }
+        }
+    }
+
+    private static Node find(Node node, int key) {
+        int index = 0;
+        for (index = 0; index < node.n; index++) {
+            if (node.key[index] > key) {
+                break;
+            }
+            if (node.key[index] == key) {
+                return node;
+            }
+        }
+        if (node.leaf) {
+            return null;
+        }
+        return find(node.child[index], key);
+    }
+
+    private static Node getPredecessor(Node node) {
+        if (node.leaf) {
+            return node;
+        }
+        return getPredecessor(node.child[node.n]);
+    }
+
+    private static Node getSuccessor(Node node) {
+        if (node.leaf) {
+            return node;
+        }
+        return getPredecessor(node.child[0]);
     }
 
     private static void print(Node node) {
