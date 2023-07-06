@@ -135,6 +135,7 @@ public class BTree {
         }
         // 삭제할 노드가 현 노드 안에 있는 경우
         if (index < node.n && node.key[index] == key) {
+            // 리프 노드면 바로 삭제
             if (node.leaf) {
                 for (index = 0; index < node.n && node.key[index] != key; index++) {
                     continue;
@@ -148,10 +149,57 @@ public class BTree {
                 return;
             }
             else {
+                // 왼쪽 자식에서 빌려옴
                 Node leftChildNode = node.child[index];
                 if (leftChildNode.n >= DEGREE) {
-
+                    Node predecessor = getPredecessor(leftChildNode);
+                    int predecessorKey = predecessor.key[predecessor.n - 1];
+                    delete(predecessor, predecessorKey);
+                    node.key[index] = predecessorKey;
+                    return;
                 }
+                // 왼쪽이 안 되면 오른쪽 자식에서 빌려옴
+                Node rightChildNode = node.child[index + 1];
+                if (rightChildNode.n >= DEGREE) {
+                    Node successor = getSuccessor(rightChildNode);
+                    int successorKey = successor.key[0];
+                    delete(successor, successorKey);
+                    node.key[index] = successorKey;
+                    return;
+                }
+                // 양옆에서 빌려오는게 안 되는 경우
+                // 기존 왼쪽 자식 노드의 n 기억
+                int tempLeftChildNodeN = leftChildNode.n;
+                // 지우려는 키를 임시로 왼쪽 자식 노드에 붙임
+                leftChildNode.key[leftChildNode.n] = node.key[index];
+                leftChildNode.n += 1;
+                // 오른쪽 자식 노드를 왼쪽 자식 노드에 붙임
+                for (int i = 0, j = leftChildNode.n; i < rightChildNode.n; i++) {
+                    leftChildNode.key[i + j] = rightChildNode.key[i];
+                    leftChildNode.child[i + tempLeftChildNodeN] = rightChildNode.child[i];
+                    leftChildNode.n += 1;
+                }
+                leftChildNode.child[leftChildNode.n] = rightChildNode.child[rightChildNode.n];
+                // 부모 노드의 키 정리
+                for (int i = index; i < node.n; i++) {
+                    if (i + 1 < MAX_DEGREE) {
+                        node.key[i] = node.key[i + 1];
+                    }
+                }
+                // 부모 노드의 자식 노드 정리
+                node.child[index] = leftChildNode;
+                for (int i = index + 1; i <= node.n; i++) {
+                    if (i + 1 < MAX_DEGREE + 1) {
+                        node.child[i] = node.child[i + 1];
+                    }
+                }
+                node.n -= 1;
+                // 부모 노드가 0이 됐을 때
+                if (node.n == 0) {
+                    node = node.child[0];
+                }
+                // 왼쪽 자식노드로 이동한 키를 완전히 지움
+                delete(leftChildNode, key);
             }
         }
     }
